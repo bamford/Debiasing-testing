@@ -1,4 +1,3 @@
-
 # Import packages ##############################################################
 ################################################################################
 import numpy as np
@@ -11,13 +10,9 @@ import math
 # Import the required files (the complete data set FITS and voronoi bin data).##
 ################################################################################
 
-os.chdir("/home/ppxrh/Zoo_catalogues/Week_9/FITS")
+gal_data=fits.getdata("fits/d20.fits",1) # Raw data from the galaxy zoo files.
 
-gal_data=fits.getdata("d20.fits",1) # Raw data from the galaxy zoo files.
-
-os.chdir("/home/ppxrh/Zoo_catalogues/voronoi")
-
-bins=np.load("vor_arm_z.npy") # Bin paramaters for each of the galaxies in the
+bins=np.load("npy/vor_arm_z.npy") # Bin paramaters for each of the galaxies in the
 # sample.
 
 cols=["t11_arms_number_a31_1_weighted_fraction",
