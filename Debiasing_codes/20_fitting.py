@@ -79,18 +79,8 @@ def plot_raw(ax, D, color):
 
 def f(x, k, c):
     # Function to fit the data bin output from the raw plot function
-    # Why is l a parameter???  Problematic???
-
     L = 1 + math.exp(c)
-
-    if L >= 100:
-        # L is limited to stop a value growing too large,
-        # particularly for the case of 2-armed galaxies.
-        # Why set to zero???
-        L = 0
-
     r = L / (1.0 + np.exp(-k * x + c))
-
     return r
 
 
