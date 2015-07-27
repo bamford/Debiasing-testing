@@ -77,7 +77,7 @@ def plot_raw(ax, D, color):
     ax.plot(D['log10fv'], D['cumfrac'], '-', color=color, lw=2)
 
 
-def f(x, k, c, L):
+def f(x, k, c):
     # Function to fit the data bin output from the raw plot function
     # Why is l a parameter???  Problematic???
 
@@ -89,7 +89,9 @@ def f(x, k, c, L):
         # Why set to zero???
         L = 0
 
-    return L / (1 + np.exp(-k * x + c))
+    r = L / (1.0 + np.exp(-k * x + c))
+
+    return r
 
 
 def plot_function(ax, x, p, color):
@@ -123,7 +125,7 @@ def fit_function(data, bins, plot=True):
 
         if plot:
             fig, axarr = plt.subplots(2, 3, sharex='col', sharey='row')
-            axarr = axarr.flat()
+            axarr = axarr.ravel()
 
         # Loop over morphological categories
         for m in range(data.meta['n_morph']):
@@ -131,6 +133,7 @@ def fit_function(data, bins, plot=True):
             z_min = z_bins.min()
             z_max = z_bins.max()
             clr_diff = (1.0 / (z_max - z_min)) if z_max - z_min != 0 else 0
+            ax = axarr[m]
 
             # Loop over redshift slices
             for z in np.unique(z_bins):
@@ -155,12 +158,17 @@ def fit_function(data, bins, plot=True):
                 D = D[['log10fv', 'cumfrac', 'index']]
 
                 # Fit function to the cumulative fraction
-                p, pcov = curve_fit(f, D['log10fv'], D['cumfrac'],
-                                    maxfev=1000000, p0=[0, 0, 0])
-                p[2] = 1 + math.exp(p[1])  # if hardcoded, why a parameter?
+                # Start fits off in roughly right place
+                if m == 1:
+                    p0 = [3, 4]
+                else:
+                    p0 = [3, -3]
+                # Note that need to cast x and y to float64 in order
+                # for minimisation to work
+                p, pcov = curve_fit(f, D['log10fv'].astype(np.float64),
+                                    D['cumfrac'].astype(np.float64), p0=p0)
 
                 if plot:
-                    ax = axarr.next()
                     plot_raw(ax, D, clr_z)
                     x = np.linspace(-4, 0, 1000)
                     plot_function(ax, x, p, clr_z)
@@ -173,7 +181,7 @@ def fit_function(data, bins, plot=True):
                 plot_guides(ax)
                 ax.tick_params(axis='both', labelsize=10)
                 ax.set_xticks(np.arange(5) - 4)
-                ax.text(-3.9, 0.9, r'$N_{arms}=${}'.format(tasklabels[m]),
+                ax.text(-3.9, 0.9, r'$N_{arms}=$' + tasklabels[m],
                         fontsize=10, ha='left')
                 ax.set_ylim([0, 1])
                 if m > 2:
@@ -184,7 +192,8 @@ def fit_function(data, bins, plot=True):
                     ax.set_title('Voronoi bin %02i' % v)
 
         if plot:
-            fig.savefig('plots/Function_fitting_v{:2i}.pdf'.format(v), dpi=200)
+            fig.savefig('plots/Function_fitting_v{:02d}.pdf'.format(v),
+                        dpi=200)
             plt.close()
 
     # Output parameters for each bin in param_data:
