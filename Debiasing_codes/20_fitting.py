@@ -133,7 +133,6 @@ def fit_function(data, bins, plot=True):
             z_min = z_bins.min()
             z_max = z_bins.max()
             clr_diff = (1.0 / (z_max - z_min)) if z_max - z_min != 0 else 0
-            ax = axarr[m]
 
             # Loop over redshift slices
             for z in np.unique(z_bins):
@@ -169,6 +168,7 @@ def fit_function(data, bins, plot=True):
                                     D['cumfrac'].astype(np.float64), p0=p0)
 
                 if plot:
+                    ax = axarr[m]
                     plot_raw(ax, D, clr_z)
                     x = np.linspace(-4, 0, 1000)
                     plot_function(ax, x, p, clr_z)
