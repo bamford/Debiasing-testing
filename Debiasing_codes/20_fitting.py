@@ -12,14 +12,22 @@ from scipy.optimize import curve_fit
 import math
 from astropy import table
 
+import params
+
+source_dir = params.source_dir
+full_sample = params.full_sample
+N_cut = params.N_cut
+p_cut = params.p_cut
+
+select = np.load(source_dir + "full_cut.npy")
+
 
 def load_data(question='t11_arms_number',
               answers=('a31_1', 'a32_2', 'a33_3', 'a34_4',
-                       'a36_more_than_4', 'a37_cant_tell'),
-              filename='fits/d20.fits'):
+                       'a36_more_than_4', 'a37_cant_tell')):
     # import the required files (the GZ2 morph, metadata, and Voronoi bins)
 
-    data = table.Table(fits.getdata(filename, 1))
+    data = table.Table(fits.getdata(source_dir + full_sample, 1))
 
     morph_cols = ['{}_{}_weighted_fraction'.format(question, a)
                   for a in answers]
@@ -32,12 +40,15 @@ def load_data(question='t11_arms_number',
                   ['unknown_{}'.format(i) for i in range(n_morph)] +
                   ['min_fv'] + ['unknown'])
     bins_dtype = ([np.int] * (n_morph + 1) + [np.float] * (n_morph + 2))
-    bins = table.Table(np.load('npy/vor_arm_z.npy').T,
+    bins = table.Table(np.load(source_dir + 'assignments.npy').T,
                        names=bins_names, dtype=bins_dtype)
 
     # limit the working dataset to only the columns we need
     # (morphology + binning parameters)
     data = data[cols]
+
+    # cut down the dataset to the selection
+    data = data[select]
 
     # give the vote fraction columns simple, generic names
     for i in range(n_morph):

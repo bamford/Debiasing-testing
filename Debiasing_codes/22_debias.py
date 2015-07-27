@@ -12,12 +12,22 @@ from astropy.io import fits
 
 n_morph = 6     # Number of poss. morphologies (6 for the various spiral arms)
 
+import params
+
+source_dir = params.source_dir
+vl_sample = params.vl_sample
+N_cut = params.N_cut
+p_cut = params.p_cut
+
+select = np.load(source_dir + "full_cut.npy")
+#################################################################################
+
 def load_data():
 
     # Load the required data
     ############################################################################
 
-    gal_data=fits.getdata("fits/d20.fits",1) # Galaxy zoo data.
+    gal_data=fits.getdata(source_dir + vl_sample,1) # Galaxy zoo data.
     
     params=np.load("npy/kc_fit_params.npy") # Parameters from the function fitting.
     
@@ -63,7 +73,7 @@ def load_data():
 
 def f(x,k,c): 
         
-    # Function for getting log(vf) (x) from CF (y)
+    # Function for getting log(vf) (x) from CF ('y')
     ############################################################################
 
     L=1+np.exp(c)
@@ -72,7 +82,7 @@ def f(x,k,c):
 
 def i_f(y,k,c):
     
-    # Function for getting CF (y) from log(vf) (x)
+    # Function for getting CF (y) from log(vf) ('x')
     ############################################################################
 
     L=1+np.exp(c)
@@ -92,6 +102,7 @@ def debias(min_z):
     for a in range(0,n_morph):
         
         z_base=min_z[a]
+        #z_base=0.02
         p=params[a]
         
         k=params[a,1]+params[a,2]*gal_tb[6]+params[a,3]*gal_tb[7]+params[a,4]*gal_tb[8]
@@ -103,28 +114,33 @@ def debias(min_z):
         kc=np.array([k,c,kb,cb])
         
         # Section for dealing with any functions outside the k and c limits. #
-            
-        kh=kc[0] > kmax[a,0]
-        kl=kc[0] < kmin[a,0]
-        ch=kc[1] > cmax[a,1]
-        cl=kc[1] < cmin[a,1]
         
-        kbh=kc[2] > kmax[a,0]
-        kbl=kc[2] < kmin[a,0]
-        cbh=kc[3] > cmax[a,1]
-        cbl=kc[3] < cmin[a,1]
+        #M=(kmax[a,0]-kmin[a,0])*(-0.05)
+        #N=(cmax[a,1]-cmin[a,1])*(-0.05)
+        M=0
+        N=0
+            
+        kh=kc[0] > kmax[a,0]+M
+        kl=kc[0] < kmin[a,0]-M
+        ch=kc[1] > cmax[a,1]+N
+        cl=kc[1] < cmin[a,1]-N
+        
+        kbh=kc[2] > kmax[a,0]+M
+        kbl=kc[2] < kmin[a,0]-M
+        cbh=kc[3] > cmax[a,1]+N
+        cbl=kc[3] < cmin[a,1]-N
         
         kc=kc.T
     
-        kc[:,0][kh]=kmax[a,0]
-        kc[:,0][kl]=kmin[a,0]
-        kc[:,1][ch]=cmax[a,1]
-        kc[:,1][cl]=cmin[a,1]
+        kc[:,0][kh]=kmax[a,0]+M
+        kc[:,0][kl]=kmin[a,0]-M
+        kc[:,1][ch]=cmax[a,1]+N
+        kc[:,1][cl]=cmin[a,1]-N
         
-        kc[:,2][kbh]=kmax[a,0]
-        kc[:,2][kbl]=kmin[a,0]
-        kc[:,3][cbh]=cmax[a,1]
-        kc[:,3][cbl]=cmin[a,1]
+        kc[:,2][kbh]=kmax[a,0]+M
+        kc[:,2][kbl]=kmin[a,0]-M
+        kc[:,3][cbh]=cmax[a,1]+N
+        kc[:,3][cbl]=cmin[a,1]-N
 
         kc=kc.T
         
@@ -214,7 +230,9 @@ if __name__ == "__main__":
 
     gal_tb,params,cmin,cmax,kmin,kmax,min_z = load_data()
     debiased = debias(min_z)
-    plot_debiased(gal_tb,debiased)
-    plot_vf_histogram(debiased)
+    #plot_debiased(gal_tb,debiased)
+    #plot_vf_histogram(debiased)
+    
+    np.save(source_dir + "debiased.npy",debiased)
 
 
