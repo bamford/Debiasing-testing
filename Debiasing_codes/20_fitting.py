@@ -145,11 +145,11 @@ def fit_function(data, bins, plot=True):
                 D = data_z[[fv, flag, 'index']]
                 D.sort(fv)
                 D['cumfrac'] = np.linspace(0, 1, n)
-                D = D[D['flag'] == 1]
+                D = D[D[flag] == 1]
                 # Do we really need to carry around flag?
                 # Can we not just do:
                 # D = D[D[fv] < 0.00001]
-                D['log10fv'] = np.log10(D['fv'])
+                D['log10fv'] = np.log10(D[fv])
 
                 # Do we need to carry around the index?
                 D = D[['log10fv', 'cumfrac', 'index']]
@@ -165,8 +165,9 @@ def fit_function(data, bins, plot=True):
                     x = np.linspace(-4, 0, 1000)
                     plot_function(ax, x, p, clr_z)
 
-                mag, size = np.mean(data_z[['PETROMAG_MR', 'R50_KPC']], axis=1)
-                param_data.append([v, m, z, mag, size] + p)
+                means = [data_z[c].mean() for c in
+                         ['PETROMAG_MR', 'R50_KPC', 'REDSHIFT_1']]
+                param_data.append([v, m, z] + means + p[:2].tolist())
 
             if plot:
                 plot_guides(ax)
@@ -197,7 +198,7 @@ def fit_function(data, bins, plot=True):
     # 6: k (fitted)
     # 7: c (fitted)
 
-    param_data = table.Table(param_data,
+    param_data = table.Table(np.array(param_data),
                              names=('vbin', 'answer', 'zbin', 'M_r',
                                     'R_50', 'redshift', 'k', 'c'))
     return param_data

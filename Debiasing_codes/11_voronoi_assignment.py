@@ -10,7 +10,7 @@ from astropy.io import fits
 import params
 
 source_dir = params.source_dir
-vl_sample = params.full_sample
+full_sample = params.full_sample
 N_cut = params.N_cut
 p_cut = params.p_cut
 
@@ -18,7 +18,7 @@ select = np.load(source_dir + "full_cut.npy")
 #################################################################################
 
 # Can set code to plot bins (voronoi cells) and plot galaxies (where each galaxy
-# is colour coded to its voronoi bin) to check that the binning is reasonable: 
+# is colour coded to its voronoi bin) to check that the binning is reasonable:
 
 plot_bins=False
 plot_gals=False
@@ -36,9 +36,9 @@ if plot_bins is True:
     plt.figure(1)
 
     for N in range(0,int(np.max(grid_data[:,2]))+1):
-    
+
         d=grid_data[grid_data[:,2] == N]
-    
+
         plt.plot(d[:,0],d[:,1],".")
         plt.ylabel(r"$R_{50} (kpc)$")
         plt.xlabel(r"$M_r$")
@@ -49,14 +49,14 @@ h,w=np.shape(gal_tb)
 gal_tb_mod=np.zeros((h,w))
 
 for c in [0,1]:
-    
+
     x=gal_tb[c]
-    
+
     gal_tb_mod[c]=(x-np.min(x))/(np.max(x)-np.min(x))
 
 # Get a grid of voronoi cells and galaxies. ####################################
 
-n=100 # Data was divided in to an n x n grid in the voronoi program. 
+n=100 # Data was divided in to an n x n grid in the voronoi program.
 
 x=np.digitize(gal_tb_mod[0],bins=np.linspace(0,1,n+1))
 y=np.digitize(gal_tb_mod[1],bins=np.linspace(0,1,n+1))
@@ -70,19 +70,19 @@ gal_xy=np.array([x,y]).T
 
 # Assign each galaxy a voronoi bin #############################################
 
-gal_xy_i=np.zeros((1,len(gal_xy))) 
+gal_xy_i=np.zeros((1,len(gal_xy)))
 
 for r in range(0,len(gal_xy)):
 
-    u=grid_xy[:,2][(grid_xy[:,0] == gal_xy[r,0]) & 
+    u=grid_xy[:,2][(grid_xy[:,0] == gal_xy[r,0]) &
                    (grid_xy[:,1] == gal_xy[r,1])]
-    
+
     if len(u) >0:
-    
+
         u=u[0]
-    
+
         gal_xy_i[0,r]=u
-        
+
 gal_xy_i=gal_xy_i[0] # This parameter is a list of voronoi bins for each galaxy.
 
 # It will therefore be saved as an NP table:
@@ -91,18 +91,18 @@ gal_xy_i=gal_xy_i[0] # This parameter is a list of voronoi bins for each galaxy.
 # Can now plot each galaxy colour coded by it's voronoi bin ####################
 
 if plot_gals is True:
-    
+
     plt.figure(2)
 
     for N in range(int(np.min(gal_xy_i)),int(np.max(gal_xy_i))+1):
-    
+
         d=gal_tb.T[gal_xy_i == N]
-    
+
         plt.plot(d[:,0],d[:,1],".")
-        
+
         plt.xlabel(r"$R_{50} (kpc)$")
         plt.ylabel(r"$M_r$")
-    
+
 plt.show()
 
 ################################################################################
@@ -134,44 +134,44 @@ print(np.array([gal_xy_i]).shape,vor_z.shape,arms.shape)
 
 
 for v in range(v_min,v_max+1):
-    
+
     v_sel=full_tb[0] == v
-    
+
     v_f=(full_tb.T[v_sel]).T
-    
+
     for a in range(0,6):
-        
+
         vr_sel=(full_tb[0] == v) & (full_tb[a+7] >= arms[6])
-    
+
         vr_f=(full_tb.T[vr_sel]).T
-        
+
         N=len(vr_f.T)/min_gals # Select bins uch that >=50 galaxies with vf>1 are in each bin.
-        
-        # Can set the min/max bin numbers here. # 
-        
+
+        # Can set the min/max bin numbers here. #
+
         if N < 5:
-            
+
             N=5
-            
+
         #########################################
-    
+
         order_z=np.argsort(vr_f[-1])
-        
+
         vr_f_sorted=(vr_f.T[order_z]).T
-    
+
         bin_edges=np.linspace(np.min(order_z),np.max(order_z),N+1)
-        
+
         bin_edges=bin_edges.astype(int)
-        
+
         z_edges=vr_f_sorted[-1][bin_edges]
-        
+
         z_edges[0]=0
         z_edges[-1]=1
-        
+
         nos=np.digitize(v_f[-1],z_edges)
-        
+
         #print(nos)
-        
+
         ((full_tb[a+1]).T[v_sel])=nos
 
 
@@ -185,6 +185,3 @@ np.save(source_dir + "assignments.npy",full_tb)
 for c in range(15):
 
     print(c,":",np.min(full_tb[c]), "->" ,np.max(full_tb[c]))
-
-
-

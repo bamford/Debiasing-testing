@@ -26,7 +26,7 @@ def f(x,A0,AM,AR,Az):
     # Function is linear combination of (magnitude, size, redshift) + an offset
     ############################################################################
 
-    return A0 + AM*x[0] + AR*x[1] + Az*x[2] 
+    return A0 + AM*x[0] + AR*x[1] + Az*x[2]
 
 def fit_mrz(data):
 
@@ -34,7 +34,7 @@ def fit_mrz(data):
     ############################################################################
 
     params=np.zeros((n_morph,9))
-    
+
     kmin=np.zeros((n_morph,2))
     kmax=np.zeros((n_morph,2))
     cmin=np.zeros((n_morph,2))
@@ -42,26 +42,26 @@ def fit_mrz(data):
 
     # Loop over GZ morphologies
     for a in range(0,n_morph):
-        
-        data_arm=data[data[:,1] == a]
-        
-        M=data_arm[:,3]
-        R=data_arm[:,4]
-        redshift=data_arm[:,5]
-        
+
+        data_arm=data[data['answer'] == a]
+
+        M=data_arm['M_r']
+        R=data_arm['R_50']
+        redshift=data_arm['redshift']
+
         x=np.array([M,R,redshift])
-        
-        k=data_arm[:,6]
-        c=data_arm[:,7]
-        
-        cmax[a,:]=data_arm[:,6:8][np.argmax(c)]
-        cmin[a,:]=data_arm[:,6:8][np.argmin(c)]
-        kmax[a,:]=data_arm[:,6:8][np.argmax(k)]
-        kmin[a,:]=data_arm[:,6:8][np.argmin(k)]
-        
-        kp,kc=curve_fit(f,x,k,maxfev=1000) # Fit k and c to the parameters. 
+
+        k=data_arm['k']
+        c=data_arm['c']
+
+        cmax[a,:]=data_arm[['k', 'c']][np.argmax(c)]
+        cmin[a,:]=data_arm[['k', 'c']][np.argmin(c)]
+        kmax[a,:]=data_arm[['k', 'c']][np.argmax(k)]
+        kmin[a,:]=data_arm[['k', 'c']][np.argmin(k)]
+
+        kp,kc=curve_fit(f,x,k,maxfev=1000) # Fit k and c to the parameters.
         cp,cc=curve_fit(f,x,c,maxfev=1000)
-        
+
         params[a,0]=a
         params[a,1:5]=kp
         params[a,5:]=cp
@@ -89,4 +89,3 @@ if __name__ == "__main__":
     data = load_data()
     params,cmin,cmax,kmin,kmax = fit_mrz(data)
     save_params(params,cmin,cmax,kmin,kmax)
-
