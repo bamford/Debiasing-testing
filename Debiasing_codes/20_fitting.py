@@ -8,7 +8,7 @@ from __future__ import division
 import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
+from scipy.optimize import minimize
 import math
 from astropy import table
 
@@ -77,14 +77,30 @@ def plot_raw(ax, D, color):
     ax.plot(D['log10fv'], D['cumfrac'], '-', color=color, lw=2)
 
 
-def f(x, k, c):
+def f_logistic(x, k, c):
     # Function to fit the data bin output from the raw plot function
     L = 1 + math.exp(c)
     r = L / (1.0 + np.exp(-k * x + c))
     return r
 
 
-def plot_function(ax, x, p, color):
+def f_exp(x, k):
+    # Function to fit the data bin output from the raw plot function
+    r = np.exp(k * x)
+    return r
+
+
+def f_exp_pow(x, k, c):
+    # Function to fit the data bin output from the raw plot function
+    r = np.exp(-k * (-x) ** c)
+    return r
+
+
+def chisq_fun(p, f, x, y):
+    return ((f(x, *p) - y)**2).sum()
+
+
+def plot_function(ax, f, x, p, color):
     # Plot fitted function to cumulative fractions
     ax.plot(x, f(x, *p), '--', color=color, lw=0.5)
 
@@ -147,25 +163,39 @@ def fit_function(data, bins, plot=True):
                 D = D[['log10fv', 'cumfrac', 'index']]
 
                 # Fit function to the cumulative fraction
-                # Start fits off in roughly right place
+                # Start fits off in roughly right place with sensible bounds
+                # This is still tuned to the arm number question
                 if m == 1:
-                    p0 = [3, 4]
+                    func = f_exp_pow
+                    p0 = [3, 1]
+                    bounds = ((0.5, 10), (0.01, 3))
                 else:
+                    func = f_logistic
                     p0 = [3, -3]
+                    bounds = ((0.5, 6), (-7.5, 0))
                 # Note that need to cast x and y to float64 in order
-                # for minimisation to work
-                p, pcov = curve_fit(f, D['log10fv'].astype(np.float64),
-                                    D['cumfrac'].astype(np.float64), p0=p0)
+                # for minimisation to work correctly
+                res = minimize(chisq_fun, p0,
+                               args=(func,
+                                     D['log10fv'].astype(np.float64),
+                                     D['cumfrac'].astype(np.float64)),
+                               bounds=bounds, method='SLSQP')
+                p = res.x
+                chi2nu = res.fun / (n - len(p))
 
                 if plot:
                     ax = axarr[m]
                     plot_raw(ax, D, clr_z)
                     x = np.linspace(-4, 0, 1000)
-                    plot_function(ax, x, p, clr_z)
+                    plot_function(ax, func, x, p, clr_z)
+
+                if len(p) < 2:
+                    p = np.array([p[0], 10])
 
                 means = [data_z[c].mean() for c in
                          ['PETROMAG_MR', 'R50_KPC', 'REDSHIFT_1']]
-                param_data.append([v, m, z] + means + p[:2].tolist())
+                param_data.append([v, m, z] + means + p[:2].tolist() +
+                                  [chi2nu])
 
             if plot:
                 plot_guides(ax)
@@ -196,10 +226,11 @@ def fit_function(data, bins, plot=True):
     # 5: redshift
     # 6: k (fitted)
     # 7: c (fitted)
+    # 8: chi2nu
 
     param_data = table.Table(np.array(param_data),
                              names=('vbin', 'answer', 'zbin', 'M_r',
-                                    'R_50', 'redshift', 'k', 'c'))
+                                    'R_50', 'redshift', 'k', 'c', 'chi2nu'))
     return param_data
 
 
