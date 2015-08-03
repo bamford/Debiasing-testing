@@ -10,7 +10,7 @@ from astropy.io import fits
 import params
 
 source_dir = params.source_dir
-vl_sample = params.full_sample
+full_sample = params.full_sample
 N_cut = params.N_cut
 p_cut = params.p_cut
 

@@ -296,6 +296,8 @@ def contour(cx,cy,grid,f,ps,con_full,plot_line,xlims,ylims,f_size):
     
     return None
   
+
+  
 ############################################################################################################
 ############################################################################################################
   
@@ -402,5 +404,55 @@ def ax_edit_6x1(f,ps,x_label,y_label,title_position,f_size):
             
     f.text(extent[1]-((extent[1]-extent[0])/2), 0.02, x_label, ha='center', va='center',size=f_size)
     f.text(0.03, extent[3]-((extent[3]-extent[2])/2), y_label, ha='center', va='center', rotation='vertical',size=f_size)
+    
+##################################################################################################
+##################################################################################################
+    
+def make_1x2_plot(xlims,ylims,xticks,yticks,xlabel,ylabel,f_size,fig_size):
+    
+    f,(ax1,ax2) = plt.subplots(1,2,sharex=True,sharey=True,figsize=fig_size)
+    ps = [ax1,ax2]
+    
+    for pn in range(2):
+        
+        ax=ps[pn]
+        ax.set_xlim(xlims)
+        ax.set_ylim(ylims)
+        ax.set_xticks(xticks)
+        ax.set_yticks(yticks)
+        
+    ax_edit_1x2(f=f,ps=ps,x_label=xlabel,y_label=ylabel,f_size=f_size)
+        
+    return f,ps
+
+def ax_edit_1x2(f,ps,x_label,y_label,f_size):
+        
+    extent=[0.07,0.98,0.08,0.98] 
+    f.subplots_adjust(hspace=0,wspace=0,left=extent[0],right=extent[1],bottom=extent[2],top=extent[3])        
+            
+    f.text(extent[1]-((extent[1]-extent[0])/2), 0.02, x_label, ha='center', va='center',size=f_size)
+    f.text(0.02, extent[3]-((extent[3]-extent[2])/2), y_label, ha='center', va='center', rotation='vertical',size=f_size)
+    
+def contour_1x2(cx,cy,grid,f,ps,xlims,ylims,f_size,a_vals):
+  
+    table,full_table = load_data(cx=cx,cy=cy,p_th=0.5,N_th=10,norm=False,p_values="d")
+    bins,table = assign(table=table,Nb=20,th=0.5,bin_type="equal samples",redistribute=False,rd_th=0,ct_th=0)
+    
+    C=["purple","red","magenta","green","blue","orange"]
+    
+    for pn in range(2):
+
+        ax = ps[pn]
+
+        for a in a_vals:
+  
+            rng=np.array([xlims,ylims])
+
+            t_select=table[bins[:,1] == a]
+
+            H,extent=con(t_select,N=grid,xlims=xlims,ylims=ylims)
+            ax.contour(H,extent=extent,colors=C[a],linewidths=2)
+    
+    return None
     
     
