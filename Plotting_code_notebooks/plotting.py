@@ -241,15 +241,16 @@ def con(D,xlims,ylims,N):
 
     extent=[xedges[0],xedges[-1],yedges[0],yedges[-1]]
 
-    H,xi,yi=np.histogram2d(D[:,-2],D[:,-1], bins=(yedges, xedges))
-    H=scipy.ndimage.interpolation.zoom(H,2,order=1)
+    H,xi,yi=np.histogram2d(D[:,-2],D[:,-1], bins=(yedges, xedges),normed=True)
+    #H=scipy.ndimage.interpolation.zoom(H,2,order=1)
+    H=scipy.ndimage.filters.gaussian_filter(input=H,sigma=1,order=0)
     
-    return(H,extent)
+    return H,extent,xedges,yedges
 
 def line_f(x,a,b):
     return a*x+b
 
-def contour(cx,cy,grid,f,ps,con_full,plot_line,xlims,ylims,f_size):
+def contour(cx,cy,grid,f,ps,con_full,plot_line,xlims,ylims,f_size,levels):
   
     table,full_table = load_data(cx=cx,cy=cy,p_th=0.5,N_th=10,norm=False,p_values="d")
     bins,table = assign(table=table,Nb=20,th=0.5,bin_type="equal samples",redistribute=False,rd_th=0,ct_th=0)
@@ -259,14 +260,25 @@ def contour(cx,cy,grid,f,ps,con_full,plot_line,xlims,ylims,f_size):
     x_ex=np.array(xlims)
     
     if con_full == 1:
-        H,extent=con(full_table,N=50,xlims=xlims,ylims=ylims)
+        H,extent,xedges,yedges=con(full_table,N=100,xlims=xlims,ylims=ylims)
         po,pc=curve_fit(line_f,full_table[:,-1],full_table[:,-2])
 
         for a in range(6):
             ax=ps[a]
             rng=np.array([xlims,ylims])
-            #ax.contour(H,extent=extent,colors="black",linewidths=1.5,alpha=0.5)
-            ax.hist2d(full_table[:,-1], full_table[:,-2], bins=40,cmap="Greys",range=rng,norm=LogNorm())
+            #ax.contourf(H,extent=extent,alpha=0.5,cmap="Greys",levels=np.linspace(0,1000,100))
+            #ax.hist2d(full_table[:,-1], full_table[:,-2], bins=80,cmap="Greys",range=rng,norm=LogNorm())
+            
+            #H,extent,xedges,yedges=con(full_table,N=100,xlims=xlims,ylims=ylims)
+            po,pc=curve_fit(line_f,full_table[:,-1],full_table[:,-2])
+
+        for a in range(6):
+            ax=ps[a]
+            rng=np.array([xlims,ylims])
+
+            X, Y = np.meshgrid(xedges, yedges)
+            ax.pcolormesh(X, Y, H,cmap="Greys")
+            ax.set_aspect('auto')
                 
             if plot_line == 1:
                 ax.plot(x_ex,line_f(x_ex,po[0],po[1]),linewidth=2,color="black")
@@ -276,9 +288,10 @@ def contour(cx,cy,grid,f,ps,con_full,plot_line,xlims,ylims,f_size):
         ax=ps[a]
         t_select=table[bins[:,1] == a]
 
-        H,extent=con(t_select,N=grid,xlims=xlims,ylims=ylims)
-        ax.contour(H,extent=extent,colors=C[a],linewidths=2)
-            
+        H,extent,xedges,yedges=con(t_select,N=grid,xlims=xlims,ylims=ylims)
+        c = ax.contour(H,extent=extent,colors=C[a],linewidths=2,norm=True,levels=levels)
+        #ax.clabel(c, inline=1, fontsize=10)
+        
         if plot_line == 1:
             po,pc=curve_fit(line_f,t_select[:,-1],t_select[:,-2])
             ax.plot(x_ex,line_f(x_ex,po[0],po[1]),linewidth=2,color=C[a])
@@ -286,17 +299,19 @@ def contour(cx,cy,grid,f,ps,con_full,plot_line,xlims,ylims,f_size):
     # Add a colourbar        
     extent_c=[0.9, 0.08, 0.02, 0.9]
     
-    f.subplots_adjust(right=extent_c[0]-0.01)        
-    plt.hist2d(full_table[:,-1], full_table[:,-2], bins=40,cmap="Greys",range=rng,norm=LogNorm())
+    f.subplots_adjust(right=extent_c[0]-0.01)
+    plt.hist2d(full_table[:,-1], full_table[:,-2], bins=80,cmap="Greys",range=rng,norm=LogNorm())
     cbar_ax = f.add_axes(extent_c)  
     plt.colorbar(cax=cbar_ax) 
     
     f.text(0.98,(extent_c[1]+extent_c[3])-(extent_c[3]/2), "$N_{gal}$", 
            ha='center', va='center', rotation='vertical',size=f_size)
+
+    for a in range(6):
+        ax.set_xlim(xlims)
+        ax.set_ylim(ylims)
     
     return None
-  
-
   
 ############################################################################################################
 ############################################################################################################
@@ -363,7 +378,7 @@ def plot_individual(cx,Nb,bin_type,style,errors,data_type):
 ############################################################################################################
 ############################################################################################################
 
-def make_6x1_plot(xlims,xticks,x_label,y_label,title_position,f_size,fig_size):
+def make_6x1_plot(xlims,xticks,x_label,y_label,title_position,f_size,fig_size,N_yticks):
 
     f, ((ax1,ax2,ax3,ax4,ax5,ax6)) = plt.subplots(6,1, sharex=True, sharey=False,figsize=fig_size)    
     ps=[ax1,ax2,ax3,ax4,ax5,ax6]
@@ -373,7 +388,7 @@ def make_6x1_plot(xlims,xticks,x_label,y_label,title_position,f_size,fig_size):
         ax.set_xlim(xlims)
         ax.set_xticks(xticks)
         #ax.set_yticks(MaxNLocator(nbins = 5,prune="upper"))
-        ax.yaxis.set_major_locator(MaxNLocator(nbins = 4,prune="upper"))
+        ax.yaxis.set_major_locator(MaxNLocator(nbins = N_yticks-1,prune="upper"))
         
     ax_edit_6x1(f=f,ps=ps,x_label=x_label,y_label=y_label,title_position=title_position,f_size=f_size)
 
@@ -450,7 +465,7 @@ def contour_1x2(cx,cy,grid,f,ps,xlims,ylims,f_size,a_vals):
 
             t_select=table[bins[:,1] == a]
 
-            H,extent=con(t_select,N=grid,xlims=xlims,ylims=ylims)
+            H,extent,xedges,yedges=con(t_select,N=grid,xlims=xlims,ylims=ylims)
             ax.contour(H,extent=extent,colors=C[a],linewidths=2)
     
     return None
