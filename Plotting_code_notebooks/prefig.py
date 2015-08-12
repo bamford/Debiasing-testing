@@ -43,8 +43,8 @@ class Prefig(plt.Figure):
         plt.rc('font', **f)
         plt.rc('text', color=fontcol)
         plt.rc('axes', labelsize='x-large', edgecolor=axcol, labelcolor=fontcol, facecolor='none', linewidth=2)
-        plt.rc('xtick', labelsize='large', color=fontcol)
-        plt.rc('ytick', labelsize='large', color=fontcol)
+        plt.rc('xtick', labelsize='18', color=fontcol)
+        plt.rc('ytick', labelsize='18', color=fontcol)
         plt.rc('lines', markersize=8, linewidth=2)
 
 
