@@ -7,19 +7,15 @@ import scipy.ndimage
 from astropy.io import fits
 import numpy as np
 import scipy.stats.distributions as dist
-from matplotlib.colors import LogNorm
-from astropy.cosmology import FlatLambdaCDM,z_at_value
-import astropy.units as u
-import math
-c = 0.683
+from matplotlib.colors import LogNorm 
 
-cosmo=FlatLambdaCDM(H0=70,Om0=0.3)
+c = 0.683
 
 gz_dir = "../../fits/"
 
 def get_mass_z_lim(mass_lims,mr_limit): # Has the values [lower mass limit,upper mass limit]
 
-    data = fits.getdata(gz_dir + "Volume_limited_sample_Baldry_w_bd.fits",1)
+    data = fits.getdata("fits/Volume_limited_sample_Baldry_w_bd.fits",1)
 
     colour_mass = np.array([data.field("PETROMAG_MU")-data.field("PETROMAG_MR"),data.field("LOGMSTAR_BALDRY06")]).T
     colour_mass = colour_mass[(colour_mass[:,1] >= mass_lims[0]) & (colour_mass[:,1] < mass_lims[1])]
@@ -34,7 +30,7 @@ def get_mass_z_lim(mass_lims,mr_limit): # Has the values [lower mass limit,upper
     L_limit = (10**mass_lims[0])/(10**ML_limit)
     Mag_limit = -2.5*math.log10(L_limit) + 4.75
     
-    D = 10**(((mr_limit-Mag_limit-0.1)/5) + 1)
+    D = 10**((mr_limit-Mag_limit-0.1)/5) + 1
     z = z_at_value(cosmo.luminosity_distance, (D/10**6) * u.Mpc, zmax=1.5)
     
     return z # => This is the redshift limit to which we have a stellar mass limited sample.
@@ -49,8 +45,6 @@ def load_data(cx,cy,p_th,N_th,norm,p_values,mass_limit,mass_range):
     # p_th,N_th: are the min. threshold for spiral vote fraction + number.
     # norm: f norm is True, debiased values are normalised to =1.
     # p_values: can set as "w" (Willett 2013),"r" (raw), or "d" (debiased).
-    # mass limit: use this to create a stellar mass limited sample, with
-    # mass_range [low,high]
     #######################################################################
 
     #gal_data=fits.getdata("../../Week_9/FITS/Volume_limited_sample_Baldry_w_bd.fits",1)
@@ -86,11 +80,10 @@ def load_data(cx,cy,p_th,N_th,norm,p_values,mass_limit,mass_range):
 
     tb = np.concatenate([debiased,np.array([y_column,x_column]).T],axis=1)
     
-    if mass_limit is True:
-        z_lim = get_mass_z_lim(mass_lims=[10,11],mr_limit=17)
+    if mass_lim is True:
+        z_lim = get_mass_z_lim(mass_lims=[10,11],mr=17)
     else:
         z_lim = 10
-        
 
     p_spiral = (gal_data.field("t01_smooth_or_features_a02_features_or_disk_debiased")*
                 gal_data.field("t02_edgeon_a05_no_debiased")*
@@ -98,12 +91,7 @@ def load_data(cx,cy,p_th,N_th,norm,p_values,mass_limit,mass_range):
     N_spiral = (gal_data.field("t04_spiral_a08_spiral_count"))
     
     tb_reduced = tb[(p_spiral > p_th) & (N_spiral > N_th) & (np.isfinite(tb[:,-1])) 
-        & (np.isfinite(tb[:,-2])) & (tb[:,-1] > -999) & (tb[:,-2] > -999) & 
-        (gal_data.field("REDSHIFT_1") <= z_lim) & (gal_data.field("LOGMSTAR_BALDRY06") >= mass_range[0])
-        & (gal_data.field("LOGMSTAR_BALDRY06") < mass_range[1])] # Can (hopefully) 
-    
-    tb = tb[(gal_data.field("REDSHIFT_1") <= z_lim) & (gal_data.field("LOGMSTAR_BALDRY06") >= mass_range[0])
-        & (gal_data.field("LOGMSTAR_BALDRY06") < mass_range[1])]
+        & (np.isfinite(tb[:,-2])) & (tb[:,-1] > -999) & (tb[:,-2] > -999) & (gal_data.field("REDSHIFT_1") <= z_lim)] # Can (hopefully) 
     # remove any entries without data. 
 
     return tb_reduced,tb # Columns: [p_1,p_2,p_3,p_4,p_5+,p_ct,y-values,x-values]
@@ -249,9 +237,9 @@ def ax_edit_2x3(f,ps,x_label,y_label,title_position,f_size):
 ######################################################################################################
 ######################################################################################################
 
-def histogram(cx,Nb,bin_extent,ps,full_hist,mass_limit,mass_range):
+def histogram(cx,Nb,bin_extent,ps,full_hist):
   
-    table,full_table = load_data(cx=cx,cy="REDSHIFT_1",p_th=0.5,N_th=10,norm=False,p_values="d",mass_limit=mass_limit,mass_range=mass_range)
+    table,full_table = load_data(cx=cx,cy="REDSHIFT_1",p_th=0.5,N_th=10,norm=False,p_values="d")
     bins,table = assign(table=table,Nb=20,th=0.5,bin_type="equal samples",redistribute=False,rd_th=0,ct_th=0)
     
     C=["purple","red","magenta","green","blue","orange"]
@@ -290,9 +278,9 @@ def con(D,xlims,ylims,N):
 def line_f(x,a,b):
     return a*x+b
 
-def contour(cx,cy,grid,f,ps,con_full,plot_line,xlims,ylims,f_size,levels,mass_limit,mass_range):
+def contour(cx,cy,grid,f,ps,con_full,plot_line,xlims,ylims,f_size,levels):
   
-    table,full_table = load_data(cx=cx,cy=cy,p_th=0.5,N_th=10,norm=False,p_values="d",mass_limit=mass_limit,mass_range=mass_range)
+    table,full_table = load_data(cx=cx,cy=cy,p_th=0.5,N_th=10,norm=False,p_values="d")
     bins,table = assign(table=table,Nb=20,th=0.5,bin_type="equal samples",redistribute=False,rd_th=0,ct_th=0)
     
     C=["purple","red","magenta","green","blue","orange"]
@@ -356,12 +344,12 @@ def contour(cx,cy,grid,f,ps,con_full,plot_line,xlims,ylims,f_size,levels,mass_li
 ############################################################################################################
 ############################################################################################################
   
-def plot_fractions(style,rd_th,ct_th,mass_limit,mass_range):
+def plot_fractions(style,rd_th,ct_th):
 
     C=["purple","red","magenta","green","blue","orange"]
     L=["1","2","3","4","5+","CT"]
 
-    t,t_full=load_data(cx=["REDSHIFT_1"],cy=["PETROMAG_MR","PETROMAG_MZ"],p_th=0.5,N_th=10,norm=False,p_values="d",mass_limit=mass_limit,mass_range=mass_range)
+    t,t_full=load_data(cx=["REDSHIFT_1"],cy=["PETROMAG_MR","PETROMAG_MZ"],p_th=0.5,N_th=10,norm=False,p_values="d")
     b,t=assign(table=t,Nb=20,th=0,bin_type="equal samples",redistribute=False,rd_th=rd_th,ct_th=ct_th)
 
     for a in range(6):
@@ -380,9 +368,9 @@ def plot_fractions(style,rd_th,ct_th,mass_limit,mass_range):
         
     return None
   
-def plot_data(cx,ps,Nb,bin_type,style,errors,data_type,mass_limit,mass_range):
+def plot_data(cx,ps,Nb,bin_type,style,errors,data_type):
   
-    table,full_table = load_data(cx=cx,cy="REDSHIFT_1",p_th=0.5,N_th=10,norm=False,p_values=data_type,mass_limit=mass_limit,mass_range=mass_range)
+    table,full_table = load_data(cx=cx,cy="REDSHIFT_1",p_th=0.5,N_th=10,norm=False,p_values=data_type)
     bins,table = assign(table=table,Nb=20,th=0.5,bin_type="equal samples",redistribute=False,rd_th=0,ct_th=0)
     
     C=["purple","red","magenta","green","blue","orange"]
@@ -398,9 +386,9 @@ def plot_data(cx,ps,Nb,bin_type,style,errors,data_type,mass_limit,mass_range):
     
     return None
   
-def plot_individual(cx,Nb,bin_type,style,errors,data_type,mass_limit,mass_range):
+def plot_individual(cx,Nb,bin_type,style,errors,data_type):
   
-    table,full_table = load_data(cx=cx,cy="REDSHIFT_1",p_th=0.5,N_th=10,norm=False,p_values=data_type,mass_limit=mass_limit,mass_range=mass_range)
+    table,full_table = load_data(cx=cx,cy="REDSHIFT_1",p_th=0.5,N_th=10,norm=False,p_values=data_type)
     bins,table = assign(table=table,Nb=20,th=0.5,bin_type=bin_type,redistribute=False,rd_th=0,ct_th=0)
     
     C=["purple","red","magenta","green","blue","orange"]
@@ -488,9 +476,9 @@ def ax_edit_1x2(f,ps,x_label,y_label,f_size):
     f.text(extent[1]-((extent[1]-extent[0])/2), 0.02, x_label, ha='center', va='center',size=f_size)
     f.text(0.02, extent[3]-((extent[3]-extent[2])/2), y_label, ha='center', va='center', rotation='vertical',size=f_size)
     
-def contour_1x2(cx,cy,grid,f,ps,xlims,ylims,f_size,a_vals,mass_limit,mass_range):
+def contour_1x2(cx,cy,grid,f,ps,xlims,ylims,f_size,a_vals):
   
-    table,full_table = load_data(cx=cx,cy=cy,p_th=0.5,N_th=10,norm=False,p_values="d",mass_limit=mass_limit,mass_range=mass_range)
+    table,full_table = load_data(cx=cx,cy=cy,p_th=0.5,N_th=10,norm=False,p_values="d")
     bins,table = assign(table=table,Nb=20,th=0.5,bin_type="equal samples",redistribute=False,rd_th=0,ct_th=0)
     
     C=["purple","red","magenta","green","blue","orange"]
