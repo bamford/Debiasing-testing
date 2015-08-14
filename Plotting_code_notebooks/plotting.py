@@ -87,7 +87,8 @@ def load_data(cx,cy,p_th,N_th,norm,p_values,mass_limit,mass_range):
     tb = np.concatenate([debiased,np.array([y_column,x_column]).T],axis=1)
     
     if mass_limit is True:
-        z_lim = get_mass_z_lim(mass_lims=[10,11],mr_limit=17)
+        z_lim = get_mass_z_lim(mass_lims=[mass_range[0],mass_range[1]],mr_limit=17)
+        print("z ->" + str(z_lim))
     else:
         z_lim = 10
         
@@ -153,6 +154,14 @@ def assign(table,Nb,th,bin_type,redistribute,rd_th,ct_th):
         for a in range(5):
             arm_assignment[(np.argmax(table[:,:5],axis=1) == a) & (arm_assignment == 5) & 
                            (table[:,a]/table[:,5] > rd_th) & (table[:,5] <= ct_th)] = a
+
+    print("total sample:" + str(len(bins)))
+    print("m = 1:" + str(np.sum(arm_assignment[0] == 0)))
+    print("m = 2:" + str(np.sum(arm_assignment[0] == 1)))
+    print("m = 3:" + str(np.sum(arm_assignment[0] == 2)))
+    print("m = 4:" + str(np.sum(arm_assignment[0] == 3)))
+    print("m = 5+:" + str(np.sum(arm_assignment[0] == 4)))
+    print("m = ct:" + str(np.sum(arm_assignment[0] == 5)))
             
     return (np.array([bins,arm_assignment[0]])).T,table # Columns: [bin assignment,arm no]
   
@@ -398,7 +407,7 @@ def plot_data(cx,ps,Nb,bin_type,style,errors,data_type,mass_limit,mass_range):
     
     return None
   
-def plot_individual(cx,Nb,bin_type,style,errors,data_type,mass_limit,mass_range):
+def plot_individual(cx,Nb,bin_type,style,errors,data_type,mass_limit,mass_range,ax):
   
     table,full_table = load_data(cx=cx,cy="REDSHIFT_1",p_th=0.5,N_th=10,norm=False,p_values=data_type,mass_limit=mass_limit,mass_range=mass_range)
     bins,table = assign(table=table,Nb=20,th=0.5,bin_type=bin_type,redistribute=False,rd_th=0,ct_th=0)
@@ -408,10 +417,10 @@ def plot_individual(cx,Nb,bin_type,style,errors,data_type,mass_limit,mass_range)
     for a in range(6):
     
         fracs=get_fracs(table=table,bins=bins,a=a,Nb=Nb)
-        plt.plot(fracs[:,0],fracs[:,1]/fracs[:,2],color=C[a],linestyle=style,linewidth=2)
+        ax.plot(fracs[:,0],fracs[:,1]/fracs[:,2],color=C[a],linestyle=style,linewidth=2)
         
         if errors == True:
-            plt.fill_between(fracs[:,0],fracs[:,3],fracs[:,4],color=C[a],alpha=0.3)
+            ax.fill_between(fracs[:,0],fracs[:,3],fracs[:,4],color=C[a],alpha=0.3)
     
     return None
   
