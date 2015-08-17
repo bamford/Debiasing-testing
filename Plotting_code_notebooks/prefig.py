@@ -37,8 +37,8 @@ class Prefig(plt.Figure):
             inv_col = (256-(256*col))/256.0
             plt.rc('axes', color_cycle = list(inv_col))
         
-        plt.rc('figure', figsize=size, facecolor='white', edgecolor='none')
-        plt.rc('savefig', dpi=300, facecolor='none', edgecolor='none', frameon='False')
+        plt.rc('figure', figsize=size, facecolor='w', edgecolor='none')
+        plt.rc('savefig', dpi=300, facecolor='w', edgecolor='none', frameon='False')
         f = {'family':font, 'size':20}
         plt.rc('font', **f)
         plt.rc('text', color=fontcol)
