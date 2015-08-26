@@ -207,5 +207,22 @@ def get_fracs(table,bins,m,c,full_data):
         
     return fracs
   
+  
+def get_xy_binned(table,bins):
+  
+    seq = np.zeros(((np.max(bins[:,0]),4)))
+    
+    for n in range(int(np.max(bins[:,0]))):
+      
+        t_n = table[bins[:,0] == n+1]
+      
+        seq[n,0] = np.mean(t_n[:,-1])
+        seq[n,1] = np.std(t_n[:,-1])
+        seq[n,2] = np.mean(t_n[:,-2])
+        seq[n,3] = np.std(t_n[:,-2])
+        
+    return seq
+  
+  
   ############################################################################
   ############################################################################
