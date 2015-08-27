@@ -11,4 +11,4 @@ sf_dir = "../../../smpy-ross/" # smpy output file directory
 
 sf_out = "par.csv" # smpy magnitudes
 
-sf_mags = "mags_all.npy" # output name
+sf_mags = "smpy_synmag_output.mags.npy" # output name

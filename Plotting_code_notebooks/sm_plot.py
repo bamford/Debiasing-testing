@@ -42,10 +42,9 @@ def age_line(x, y, val, color, label=r'$\tau$', lw=3):
     plt.plot(x, y, '-', color=color, lw=lw,
              label=r'{} = {}'.format(label, val),
              zorder=1)
-    plt.scatter(x, y, c=values['tg'], s=50, zorder=2)
+    plt.scatter(x, y, c=np.log10(values['tg']), s=50, zorder=2)
     
     return None
-
 
 #-----------------------------------------------------------------------------
 def modify_string_name(s):
@@ -96,6 +95,8 @@ def color_color_age_line_par(par,val,mags,colour1,colour2,linecolor='k',label=r'
     coly = coly.squeeze()
     age_line(colx, coly, val, linecolor, label) 
     
+    return None
+    
 #-----------------------------------------------------------------------------
 
 def dust_arrow_plot(val,mags,colour1,colour2):
@@ -112,8 +113,8 @@ def dust_arrow_plot(val,mags,colour1,colour2):
     riAv1mag = (string_to_var(s=colour2[0],u=u,g=g,r=r,i=i,z=z) 
         - string_to_var(s=colour2[1],u=u,g=g,r=r,i=i,z=z))
     
-    xy0 = (0.35, 0.25)
-    xy1 = (0.35 + grAv1mag, 0.25 + riAv1mag)
+    xy0 = (0,0.2)
+    xy1 = (0 + grAv1mag, 0.2 + riAv1mag)
     
     arrow = plt.annotate("", xy=xy1, xytext=xy0,
         arrowprops=dict(frac=0.1, width=2))
@@ -149,14 +150,10 @@ def plot_line(vary,taus,Avs,dust_arrow,colour1,colour2):
                 ,colour1=colour1,colour2=colour2,linecolor=colours[c],label=label)
             
     cb = plt.colorbar()
-    cb.ax.set_ylabel('age [Gyr]')
+    cb.ax.set_ylabel('$\log(age [Gyr])$')
     plt.legend(loc = 'upper left', fontsize='small')
             
-    if dust_arrow == True:
-        dust_arrow_plot(1,mags=mags_all,colour1=colour1,colour2=colour2)
+    if dust_arrow != None:
+        dust_arrow_plot(val=dust_arrow,mags=mags_all,colour1=colour1,colour2=colour2)
             
-    return None
-            
-    
-            
-        
+    return None        
