@@ -19,9 +19,76 @@ def get_column(c,data,col_name):
             print(col_name + "has >2 fields. Only the first field was used.")
 	    
     return column
-    
-
+  
 def load(cx,cy,p_th,N_th,norm,p_values):
+    '''
+    Loads the data------------------------------------------------------------
+    --------------------------------------------------------------------------
+    Arguments:
+
+    cx,cy: are the columns to load that will be plotted in x and y.
+    
+    p_th,N_th: are the min. threshold for spiral vote fraction + number.
+    
+    norm: f norm is True, debiased values are normalised to =1.
+    
+    p_values: can set as "w" (Willett 2013),"r" (raw), or "d" (debiased).
+    --------------------------------------------------------------------------
+    Returns:
+    
+    tb_reduced: spiral galaxy table.
+    tb: table with all galaxies in the volume-limited sample.
+    
+    * Both arrays have the following columns:
+    [p_1,p_2,p_3,p_4,p_5+,p_ct,y-values,x-values]
+    --------------------------------------------------------------------------
+    '''
+
+    gal_data = fits.getdata(gz_dir 
+        + data_file,1) # FITS containing the 
+    # volume-limited sample is loaded.
+    cols = ["t11_arms_number_a31_1_","t11_arms_number_a32_2_"
+        ,"t11_arms_number_a33_3_","t11_arms_number_a34_4_"
+        ,"t11_arms_number_a36_more_than_4_","t11_arms_number_a37_cant_tell_"]  
+    # Columns containing the vote data from the FITS file.
+    
+    if p_values == "w": # This section of code loads the vote fractions.
+        cols = [s + "debiased" for s in cols]
+        f_v = np.array([gal_data.field(c) for c in cols]).T     
+    elif p_values == "r":
+        cols = [s + "weighted_fraction" for s in cols]
+        f_v = np.array([gal_data.field(c) for c in cols]).T 
+    else:  
+        deb_data = fits.getdata(gz_dir + debiased_table,1)
+        
+        cols = [s + "weighted_fraction" for s in cols]
+        f_v = np.array([deb_data.field(c) for c in cols]).T 
+
+        if norm is True:
+            debiased = (debiased.T/np.sum(debiased,axis=1)).T
+            
+    x_column = get_column(c=cx,data=gal_data,col_name="x") 
+    y_column = get_column(c=cy,data=gal_data,col_name="y") # Get the data from
+    # the FITS file.
+    
+    tb = np.concatenate([f_v,np.array([y_column,x_column]).T],axis=1)
+        
+    p_spiral = (
+        gal_data.field("t01_smooth_or_features_a02_features_or_disk_debiased")
+        *gal_data.field("t02_edgeon_a05_no_debiased")
+        *gal_data.field("t04_spiral_a08_spiral_debiased"))
+    N_spiral = (gal_data.field("t04_spiral_a08_spiral_count")) # Load values to
+    # allow data cuts to be made.
+    
+    tb_reduced = tb[(p_spiral > p_th) & (N_spiral > N_th) # Threshold cut.
+        & (np.isfinite(tb[:,-1])) & (np.isfinite(tb[:,-2]))
+        & (tb[:,-1] > -999) & (tb[:,-2] > -999)] # Check values sre finite.
+
+    return tb_reduced,tb
+  
+ 
+def load_old(cx,cy,p_th,N_th,norm,p_values): # Old loading table, deprecated
+  # using the updated debiasing procedure for SPB.
     '''
     Loads the data------------------------------------------------------------
     --------------------------------------------------------------------------
