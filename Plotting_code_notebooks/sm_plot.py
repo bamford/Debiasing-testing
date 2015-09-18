@@ -124,7 +124,7 @@ def dust_arrow_plot(val,mags,colour1,colour2):
     return None
 
 #-----------------------------------------------------------------------------
-def plot_line(vary,taus,Avs,dust_arrow,colour1,colour2):
+def plot_line(vary,taus,Avs,dust_arrow,colour1,colour2,colourbar=False):
 
     c = -1
         
@@ -148,9 +148,12 @@ def plot_line(vary,taus,Avs,dust_arrow,colour1,colour2):
             c=c+1
             color_color_age_line_par("tau",taus[c], mags
                 ,colour1=colour1,colour2=colour2,linecolor=colours[c],label=label)
-            
-    cb = plt.colorbar()
-    cb.ax.set_ylabel('$\log(age [Gyr])$')
+    
+    if colourbar == True:
+      
+        cb=plt.colorbar()
+        cb.ax.set_ylabel('$\log(age [Gyr])$')
+        
     plt.legend(loc = 'upper left', fontsize='small')
             
     if dust_arrow != None:
