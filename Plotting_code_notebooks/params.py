@@ -8,7 +8,7 @@ filename = "data_vl.fits"
 deb_vals = "debiased_vl_t11_arms_number.fits"
 #---------------------------------------------------------------------
 
-sf_dir = "../../../smpy-ross/" # smpy output file directory
+sf_dir = "../../smpy-ross/" # smpy output file directory
 
 sf_out = "par.csv" # smpy magnitudes
 
